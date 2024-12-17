@@ -1,0 +1,50 @@
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
+public class UpstashPriorityQueue {
+    private final String redisUrl;
+    private final String authToken;
+    private final HttpClient client;
+
+    public UpstashPriorityQueue(String redisUrl, String authToken) {
+        this.redisUrl = redisUrl;
+        this.authToken = authToken;
+        this.client = HttpClient.newHttpClient();
+    }
+
+    public void add(String key, String request, int priority) throws Exception {
+        long timestamp = System.currentTimeMillis();
+        double score = priority * 1e6 + timestamp;
+
+        String payload = String.format("{\"ZADD\": {\"key\": \"%s\", \"score\": %f, \"member\": \"%s\"}}", key, score, request);
+        sendPostRequest(payload);
+    }
+
+    public String poll(String key) throws Exception {
+        String payload = String.format("{\"ZRANGE\": {\"key\": \"%s\", \"start\": 0, \"stop\": 0, \"withscores\": false}}", key);
+        String response = sendPostRequest(payload);
+
+        // Assuming the response contains the member at index 0
+        if (response == null || response.isEmpty()) return null;
+
+        String member = response; // Extract actual member from response
+        String removePayload = String.format("{\"ZREM\": {\"key\": \"%s\", \"members\": [\"%s\"]}}", key, member);
+        sendPostRequest(removePayload);
+
+        return member;
+    }
+
+    private String sendPostRequest(String payload) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(redisUrl))
+                .header("Authorization", "Bearer " + authToken)
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(payload))
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        return response.body();
+    }
+}
