@@ -1,0 +1,17 @@
+public class Main {
+    public static void main(String[] args) throws Exception {
+        String redisUrl = "https://<UPSTASH-REDIS-URL>";
+        String authToken = "<UPSTASH-API-TOKEN>";
+        UpstashPriorityQueue queue = new UpstashPriorityQueue(redisUrl, authToken);
+
+        String queueName = "my-priority-queue";
+
+        queue.add(queueName, "Request1", 1);
+        queue.add(queueName, "Request2", 2);
+        queue.add(queueName, "Request3", 1);
+
+        System.out.println("Polled: " + queue.poll(queueName)); // Request1
+        System.out.println("Polled: " + queue.poll(queueName)); // Request3
+        System.out.println("Polled: " + queue.poll(queueName)); // Request2
+    }
+}
