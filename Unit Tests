@@ -1,0 +1,18 @@
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+class InMemoryPriorityQueueTest {
+    @Test
+    void testPriorityQueue() {
+        InMemoryPriorityQueue queue = new InMemoryPriorityQueue();
+        
+        queue.add(new Request("Request1"), 1);
+        queue.add(new Request("Request2"), 2);
+        queue.add(new Request("Request3"), 1);
+
+        assertEquals("Request1", queue.poll().toString());
+        assertEquals("Request3", queue.poll().toString());
+        assertEquals("Request2", queue.poll().toString());
+        assertTrue(queue.isEmpty());
+    }
+}
